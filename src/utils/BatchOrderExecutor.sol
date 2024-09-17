@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import {Events} from "./Events.sol";
@@ -49,9 +49,9 @@ contract BatchOrderExecutor is Events {
                 if eq(success, 0) {
                     mstore(0x00, 0x08c379a000000000000000000000000000000000000000000000000000000000)
                     mstore(0x04, 0x0000000000000000000000000000000000000000000000000000000000000020)
-                    mstore(0x24, 0x0000000000000000000000000000000000000000000000000000000000000017) // 22 bytes for the error message length
+                    mstore(0x24, 0x0000000000000000000000000000000000000000000000000000000000000017) 
                     mstore(0x44, 0x42617463684578656375746f723a206d756c746963616c6c33206661696c6564)
-                    revert(0x00, 0x64) // Revert with the error message
+                    revert(0x00, 0x64) 
                 }
             }
         }

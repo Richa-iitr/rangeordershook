@@ -23,6 +23,8 @@ contract RangeOrders is Events {
         public pendingOrders;
 
     mapping(PoolId poolId => int24 lowerTick) public lastLowerTicks;
+    mapping(uint256 positionId => uint256 outputClaimable)
+        public claimableOutputTokens;
 
     PoolKey public poolKey;
 
@@ -58,6 +60,14 @@ contract RangeOrders is Events {
         return
             (orderType == OrderType.BUYSTOP) ||
             (orderType == OrderType.STOPLOSS);
+    }
+
+    function getPositionId(
+        PoolKey calldata key,
+        int24 tick,
+        bool zeroForOne
+    ) public pure returns (uint256) {
+        return uint256(keccak256(abi.encode(key.toId(), tick, zeroForOne)));
     }
 
     function placeOrder(
@@ -149,42 +159,35 @@ contract RangeOrders is Events {
     // TODO
     function killOrder() external {}
 
-    // function redeem(
-    //     PoolKey calldata key,
-    //     int24 tickToSellAt,
-    //     bool zeroForOne,
-    //     uint256 inputAmountToClaimFor
-    // ) external {
-    //     // Get lower actually usable tick for their order
-    //     int24 tick = getLowerUsableTick(tickToSellAt, key.tickSpacing);
-    //     uint256 positionId = getPositionId(key, tick, zeroForOne);
+    //TODO
+    function redeem(
+        PoolKey calldata key,
+        int24 tickToSellAt,
+        bool zeroForOne,
+        uint256 inputAmountToClaimFor
+    ) external {
+        int24 tick = getLowerUsableTick(tickToSellAt, key.tickSpacing);
+        uint256 positionId = getPositionId(key, tick, zeroForOne);
 
-    //     // If no output tokens can be claimed yet i.e. order hasn't been filled
-    //     // throw error
-    //     if (claimableOutputTokens[positionId] == 0) revert NothingToClaim();
+        // if (claimableOutputTokens[positionId] == 0) revert NothingToClaim();
 
-    //     // they must have claim tokens >= inputAmountToClaimFor
-    //     uint256 positionTokens = balanceOf(msg.sender, positionId);
-    //     if (positionTokens < inputAmountToClaimFor) revert NotEnoughToClaim();
+        // uint256 positionTokens = balanceOf(msg.sender, positionId);
+        // if (positionTokens < inputAmountToClaimFor) revert NotEnoughToClaim();
 
-    //     uint256 totalClaimableForPosition = claimableOutputTokens[positionId];
-    //     uint256 totalInputAmountForPosition = claimTokensSupply[positionId];
+        // uint256 totalClaimableForPosition = claimableOutputTokens[positionId];
+        // uint256 totalInputAmountForPosition = claimTokensSupply[positionId];
 
-    //     // outputAmount = (inputAmountToClaimFor * totalClaimableForPosition) / (totalInputAmountForPosition)
-    //     uint256 outputAmount = inputAmountToClaimFor.mulDivDown(
-    //         totalClaimableForPosition,
-    //         totalInputAmountForPosition
-    //     );
+        // uint256 outputAmount = inputAmountToClaimFor.mulDivDown(
+        //     totalClaimableForPosition,
+        //     totalInputAmountForPosition
+        // );
 
-    //     // Reduce claimable output tokens amount
-    //     // Reduce claim token total supply for position
-    //     // Burn claim tokens
-    //     claimableOutputTokens[positionId] -= outputAmount;
-    //     claimTokensSupply[positionId] -= inputAmountToClaimFor;
-    //     _burn(msg.sender, positionId, inputAmountToClaimFor);
+        // claimableOutputTokens[positionId] -= outputAmount;
+        // claimTokensSupply[positionId] -= inputAmountToClaimFor;
+        // _burn(msg.sender, positionId, inputAmountToClaimFor);
 
-    //     // Transfer output tokens
-    //     Currency token = zeroForOne ? key.currency1 : key.currency0;
-    //     token.transfer(msg.sender, outputAmount);
-    // }
+        // // Transfer output tokens
+        // Currency token = zeroForOne ? key.currency1 : key.currency0;
+        // token.transfer(msg.sender, outputAmount);
+    }
 }

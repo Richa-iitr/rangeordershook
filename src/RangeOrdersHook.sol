@@ -115,10 +115,10 @@ contract RangeOrdersHook is BaseHook, RangeOrders {
             revert("RangeOrders: in-valid order");
         }
 
-        address tokenIn = !order.zeroForOne
+        address tokenOut = order.zeroForOne
             ? Currency.unwrap(poolKey.currency1)
             : Currency.unwrap(poolKey.currency0);
-        address tokenOut = !order.zeroForOne
+        address tokenIn = order.zeroForOne
             ? Currency.unwrap(poolKey.currency0)
             : Currency.unwrap(poolKey.currency1);
         IERC20(tokenIn).transfer(msg.sender, order.amountIn);

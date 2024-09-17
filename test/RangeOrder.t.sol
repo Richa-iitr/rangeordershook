@@ -112,7 +112,7 @@ contract RangeOrdersTest is Test , Deployers, GasSnapshot{
             amount: 0,
             data: abi.encodeWithSelector(TestERC20.transfer.selector, address(order.user), 1 * 10 ** 18) 
          });
-        orderExecutor.executeSettlement(address(hook), order.id, actions);
+        orderExecutor.executeFulfillment(address(hook), order.id, actions);
         uint256 balanceAfter1 = token1.balanceOf(address(order.user));
 
         assertEq(balanceAfter1 - balanceBefore1, 1 * 10 ** 18);

@@ -11,7 +11,7 @@ contract BatchOrderExecutor is Events {
         bytes data;
     }
 
-    function executeSettlement(
+    function executeFulfillment(
         address poolHook,
         bytes32 orderId,
         Action[] calldata actions

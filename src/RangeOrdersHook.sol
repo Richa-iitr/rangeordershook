@@ -16,7 +16,11 @@ contract RangeOrdersHook is BaseHook, RangeOrders {
 
     constructor(IPoolManager _poolManager) BaseHook(_poolManager) {}
 
-    function getHookPermissions() public pure override returns (Hooks.Permissions memory)
+    function getHookPermissions()
+        public
+        pure
+        override
+        returns (Hooks.Permissions memory)
     {
         return
             Hooks.Permissions({
@@ -76,6 +80,14 @@ contract RangeOrdersHook is BaseHook, RangeOrders {
                 for (uint256 i = 0; i < ordersToExecute.length; i++) {
                     orderIds[index] = ordersToExecute[i].id;
                     index++;
+                    IPoolManager.SwapParams
+                        memory orderSwapParams = IPoolManager.SwapParams({
+                            zeroForOne: zeroForOne,
+                            amountSpecified: int256(ordersToExecute[i].amountIn),
+                            sqrtPriceLimitX96: zeroForOne
+                                ? MIN_PRICE_LIMIT
+                                : MAX_PRICE_LIMIT
+                        });
                 }
                 if (orderIds.length > 0) {
                     emit OrdersQueued(orderIds);
@@ -94,6 +106,14 @@ contract RangeOrdersHook is BaseHook, RangeOrders {
                 for (uint256 i = 0; i < ordersToExecute.length; i++) {
                     orderIds[index] = ordersToExecute[i].id;
                     index++;
+                    IPoolManager.SwapParams
+                        memory orderSwapParams = IPoolManager.SwapParams({
+                            zeroForOne: zeroForOne,
+                            amountSpecified: int256(ordersToExecute[i].amountIn),
+                            sqrtPriceLimitX96: zeroForOne
+                                ? MIN_PRICE_LIMIT
+                                : MAX_PRICE_LIMIT
+                        });
                 }
                 if (orderIds.length > 0) {
                     emit OrdersQueued(orderIds);
@@ -107,7 +127,10 @@ contract RangeOrdersHook is BaseHook, RangeOrders {
     }
 
     //TODO: hook call when??
-    function executeOrderAndRedeem(bytes32 orderId, bytes calldata data) external {
+    function executeOrderAndRedeem(
+        bytes32 orderId,
+        bytes calldata data
+    ) external {
         Order storage order = ordersById[orderId];
         (, int24 currentTick, , ) = poolManager.getSlot0(poolKey.toId());
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {Currency, CurrencyLibrary} from "v4-core/types/Currency.sol";
-
+import {ERC1155} from "solmate/src/tokens/ERC1155.sol";
 import {TickMath} from "v4-periphery/lib/v4-core/src/libraries/TickMath.sol";
 import {BalanceDelta} from "v4-periphery/lib/v4-core/src/types/BalanceDelta.sol";
 
@@ -18,6 +18,9 @@ contract RangeOrders is Events {
     using PoolIdLibrary for PoolKey;
     using CurrencyLibrary for Currency;
     using FixedPointMathLib for uint256;
+
+    uint160 public constant MIN_PRICE_LIMIT = TickMath.MIN_SQRT_PRICE + 1;
+    uint160 public constant MAX_PRICE_LIMIT = TickMath.MAX_SQRT_PRICE - 1;
 
     mapping(PoolId poolId => mapping(int24 tickToSellAt => mapping(bool zeroForOne => uint256 inputAmount)))
         public pendingOrders;
@@ -51,7 +54,8 @@ contract RangeOrders is Events {
     mapping(int24 tick => mapping(bool zeroForOne => Order[])) public orders;
     mapping(PoolId => int24) public lastLowerTick;
     mapping(address userAddress => Order[]) public ordersByUser;
-
+    mapping(uint256 positionId => uint256 claimsSupply)
+        public claimTokensSupply;
     function getOrderId(address sender) internal returns (bytes32) {
         return keccak256(abi.encodePacked(count, sender, block.timestamp));
     }
@@ -169,25 +173,24 @@ contract RangeOrders is Events {
         int24 tick = getLowerUsableTick(tickToSellAt, key.tickSpacing);
         uint256 positionId = getPositionId(key, tick, zeroForOne);
 
-        // if (claimableOutputTokens[positionId] == 0) revert NothingToClaim();
+        if (claimableOutputTokens[positionId] == 0) revert("RangeOrders: No claimable tokens");
 
-        // uint256 positionTokens = balanceOf(msg.sender, positionId);
-        // if (positionTokens < inputAmountToClaimFor) revert NotEnoughToClaim();
+        // uint256 positionTokens = IERC20(key.currency1).balanceOf(msg.sender);
+        // if (positionTokens < inputAmountToClaimFor) revert("RangeOrders: Insufficient balance");
 
-        // uint256 totalClaimableForPosition = claimableOutputTokens[positionId];
-        // uint256 totalInputAmountForPosition = claimTokensSupply[positionId];
+        uint256 totalClaimableForPosition = claimableOutputTokens[positionId];
+        uint256 totalInputAmountForPosition = claimTokensSupply[positionId];
 
-        // uint256 outputAmount = inputAmountToClaimFor.mulDivDown(
-        //     totalClaimableForPosition,
-        //     totalInputAmountForPosition
-        // );
+        uint256 outputAmount = inputAmountToClaimFor.mulDivDown(
+            totalClaimableForPosition,
+            totalInputAmountForPosition
+        );
 
-        // claimableOutputTokens[positionId] -= outputAmount;
-        // claimTokensSupply[positionId] -= inputAmountToClaimFor;
-        // _burn(msg.sender, positionId, inputAmountToClaimFor);
+        claimableOutputTokens[positionId] -= outputAmount;
+        claimTokensSupply[positionId] -= inputAmountToClaimFor;
 
-        // // Transfer output tokens
-        // Currency token = zeroForOne ? key.currency1 : key.currency0;
-        // token.transfer(msg.sender, outputAmount);
+        // Transfer output tokens
+        Currency token = zeroForOne ? key.currency1 : key.currency0;
+        token.transfer(msg.sender, outputAmount);
     }
 }

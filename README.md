@@ -1,3 +1,30 @@
+# RangeOrders Hook
+Uniswap provides users an opportunity to place range orders which are liquidity provision strategy where users supply a single asset within a specific price range, functioning similarly to a limit order. As the market price moves through the designated range, the liquidity gradually converts into the target asset, allowing users to trade at predefined price levels. Unlike traditional limit orders, range orders also generate trading fees while being executed, as they are part of Uniswap's liquidity pool. The uniswap doc mentions:
+> One important distinction: range orders, unlike traditional limit orders, will be unfilled if the spot price crosses the given range and then reverses to recross in the opposite direction before the target asset is withdrawn. While you will be earning LP fees during this time, if the goal is to exit fully in the desired destination asset, you will need to keep an eye on the order and either manually remove your liquidity when the order has been filled or use a third party position manager service to withdraw on your behalf.
+
+This makes range orders a little tedious for the user as it needs to be monitored and the position manually withdrawn.
+
+## Project description
+The project is a modified version of one of my previous projects where range orders were automated. So that was a project without the use of hooks by keeping a track of orders placed and running a cron job to execute the orders as and when the tick ranges match. This project is an attempt to duplicate the functionality with Uniswap v4 features and hooks. The flow goes as follows:
+- The user uses the hook to place a range order of any type (Take Profit, Buy Stop, Buy Limit, Stop Loss).
+- The orders are stored in a storage mappings.
+- Whenever a swap happens an `afterSwap` hook fetches the orders which can be executed with the ticks shifted to new range.
+- An executor executes the order which can be executed based on the afterSwap, it fulfills the order and redeems and transfers the swapped tokens to user.
+![Research and design](https://github.com/user-attachments/assets/e4354d08-b4ef-47aa-a2e4-62c339270c9b)
+
+## Extension
+- Currently a batch executor is running the valid orders, as a future work would research on how this can be done via hook itself or some other mechanism.
+- The current version is a basic one with inconsiderations of slippage, losses and partial orders fulfillments, these need to be taken care of to make the hook production ready.
+- The hook can be extended to a LP position manager providing automated services to LPs like range orders, rebalancing, profit strategies, loss-safety, auth.
+- Integration with Brevis for profit strategies can be done based on common patterns in trades (if possible an AI model can be trained to recommend strategies based on position)
+- Integration with EigenLayer AVS for validation and execution of orders automatically.
+
+## Challenges
+- Understanding Uniswap v4 took time.
+- It was a bit challenging to decide on a flow however previous works on Take profit, Limit Orders, Stop Loss and similar helped.
+- Version mismatches led to a lot of time in debugging.
+- The logic flow of certain components especially automating within the hook and so are a bit time-taking.
+
 # v4-template
 ### **A template for writing Uniswap v4 Hooks 🦄**
 
